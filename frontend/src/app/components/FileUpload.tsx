@@ -6,9 +6,10 @@ import { useDropzone } from 'react-dropzone';
 interface FileUploadProps {
   onUpload: (transcript: string) => void;
   onProgress: (progress: number) => void;
+  onStart: () => void;
 }
 
-export default function FileUpload({ onUpload, onProgress }: FileUploadProps) {
+export default function FileUpload({ onUpload, onProgress, onStart }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,30 +19,16 @@ export default function FileUpload({ onUpload, onProgress }: FileUploadProps) {
     const file = acceptedFiles[0];
     setIsUploading(true);
     setError(null);
-    onProgress(0);
+    onStart();
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      // Simulate upload progress
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        if (progress < 90) {
-          progress += 10;
-          onProgress(progress);
-        } else {
-          clearInterval(progressInterval);
-        }
-      }, 500);
-
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData,
       });
-
-      clearInterval(progressInterval);
-      onProgress(100);
 
       const data = await response.json();
 
@@ -56,14 +43,15 @@ export default function FileUpload({ onUpload, onProgress }: FileUploadProps) {
     } finally {
       setIsUploading(false);
     }
-  }, [onUpload, onProgress]);
+  }, [onUpload, onProgress, onStart]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'video/*': ['.mp4', '.avi', '.mov', '.mkv']
     },
-    multiple: false
+    multiple: false,
+    maxSize: 100 * 1024 * 1024 // 100MB max file size
   });
 
   return (
@@ -86,6 +74,7 @@ export default function FileUpload({ onUpload, onProgress }: FileUploadProps) {
             ? 'Uploading...'
             : 'or click to select a file to transcribe'}
         </p>
+        <p className="text-gray-500 text-sm">Maximum file size: 100MB</p>
         {error && (
           <p className="text-red-500 mt-2">{error}</p>
         )}

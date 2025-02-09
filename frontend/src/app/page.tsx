@@ -2,10 +2,24 @@
 
 import { useState } from 'react';
 import FileUpload from './components/FileUpload';
+import TranscriptDisplay from './components/TranscriptDisplay';
 
 export default function Home() {
   const [transcript, setTranscript] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleUploadStart = () => {
+    setIsProcessing(true);
+    setProgress(0);
+    setTranscript(null);
+  };
+
+  const handleUploadComplete = (text: string) => {
+    setTranscript(text);
+    setProgress(100);
+    setIsProcessing(false);
+  };
 
   return (
     <main className="min-h-screen p-8 md:p-24">
@@ -15,32 +29,32 @@ export default function Home() {
         </h1>
         <div className="bg-gray-900 rounded-xl p-8 shadow-2xl">
           <FileUpload 
-            onUpload={setTranscript}
+            onUpload={handleUploadComplete}
             onProgress={setProgress}
+            onStart={handleUploadStart}
           />
           
           {/* Progress Section */}
-          {progress > 0 && progress < 100 && (
+          {isProcessing && (
             <div className="mt-8">
-              <div className="w-full bg-gray-800 rounded-full h-2">
+              <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-500 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${progress}%` }}
+                  className="bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-500 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ 
+                    width: `${progress}%`,
+                    transition: 'width 0.5s ease-out'
+                  }}
                 ></div>
               </div>
-              <p className="text-gray-400 text-sm mt-2 text-center">Processing video... {progress}%</p>
+              <div className="flex justify-between text-gray-400 text-sm mt-2">
+                <span>Processing video...</span>
+                <span>{progress}%</span>
+              </div>
             </div>
           )}
 
-          {/* Results Section */}
-          {transcript && (
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4 text-gray-200">Transcript</h2>
-              <div className="bg-gray-800 rounded-lg p-6 text-gray-300">
-                <p className="whitespace-pre-wrap">{transcript}</p>
-              </div>
-            </div>
-          )}
+          {/* Transcript Display */}
+          {transcript && <TranscriptDisplay transcript={transcript} />}
         </div>
       </div>
     </main>
